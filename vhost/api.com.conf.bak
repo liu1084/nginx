@@ -1,0 +1,40 @@
+upstream api_server {
+    server localhost:8080;
+}
+
+server {
+        listen       8088;
+        server_name  api.com;
+        root d:/http/nginx-1.9.12/html/api.com;
+        index index.php index.html;
+        charset utf-8;
+        access_log  d:/http/nginx-1.9.12/logs/api.com.access.log  main;
+        location /api/ {
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-NginX-Proxy true;
+                proxy_pass http://localhost:8080/;
+                proxy_ssl_session_reuse off;
+                proxy_set_header Host $http_host;
+                proxy_redirect off;
+        }
+        location / {
+            try_files $uri $uri/ /404.html;
+        }
+        error_page  404              /404.html;
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   html;
+        }
+        location ~ \.php$ {
+            try_files $uri =404;
+            fastcgi_split_path_info ^(.+\.php)(/.+)$;
+            fastcgi_pass 127.0.0.1:9000;
+            fastcgi_index index.php;
+            fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+            include fastcgi_params;
+        }
+        location ~ /\.ht {
+            deny  all;
+        }
+    }
